@@ -1,6 +1,6 @@
 [package]
 name = "bbmodel-rs"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 authors = ["Exotik850"]
 description = "A Rust library for working with Blockbench model files (.bbmodel)."
@@ -12,8 +12,8 @@ readme = "README.md"
 glam = { version = "0.33.2", optional = true, features = [
   "serde",
 ], default-features = false }
-serde = { version = "1.0.228", features = ["derive"], default-features = false }
-serde_json = { version = "1.0", default-features = false }
+serde = { version = "1.0.228", features = ["derive", "alloc"], default-features = false }
+serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 serde_with = { version = "3.21", default-features = false, features = ["macros"] }
 uuid = { version = "1.23.4", features = ["serde"], default-features = false }
 
