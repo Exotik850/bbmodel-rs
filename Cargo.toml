@@ -6,6 +6,7 @@ authors = ["Exotik850"]
 description = "A Rust library for working with Blockbench model files (.bbmodel)."
 keywords = ["parsing"]
 license = "MIT"
+readme = "README.md"
 
 [dependencies]
 glam = { version = "0.33.2", optional = true, features = [
