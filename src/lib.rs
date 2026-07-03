@@ -83,29 +83,35 @@ fn default_interpolation() -> Interpolation {
 // ---------------------------------------------------------------------------
 
 /// Top-level `.bbmodel` file representation (format version 5.0).
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, Default)]
 #[skip_serializing_none]
 pub struct BBModel {
     pub meta: Metadata,
     #[serde(default)]
     pub name: Option<String>,
-    pub resolution: Resolution,
-    #[serde(default)]
+    pub resolution: Option<Resolution>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub elements: Vec<Element>,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub groups: Vec<Group>,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub outliner: Vec<OutlinerNode>,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub textures: Vec<Texture>,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub animations: Vec<Animation>,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub animation_controllers: Vec<AnimationController>,
     #[serde(default)]
     pub display: Option<Display>,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub collections: Vec<Collection>,
+}
+
+impl BBModel {
+    pub fn new() -> Self {
+        BBModel::default()
+    }
 }
 
 // ---------------------------------------------------------------------------

@@ -42,7 +42,7 @@ pub struct Animation {
     #[serde(default)]
     pub loop_delay: Option<String>,
     /// Animators keyed by the animated node/element UUID.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
     pub animators: HashMap<String, Animator>,
 }
 
@@ -61,7 +61,7 @@ pub struct Animator {
     pub name: Option<String>,
     #[serde(rename = "type", default)]
     pub r#type: Option<AnimatorType>,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub keyframes: Vec<Keyframe>,
 }
 
@@ -126,6 +126,6 @@ pub struct AnimationController {
     pub uuid: Option<Uuid>,
     #[serde(default)]
     pub name: Option<String>,
-    #[serde(flatten)]
+    #[serde(flatten, skip_serializing_if = "HashMap::is_empty")]
     pub extra: HashMap<String, serde_json::Value>,
 }

@@ -70,7 +70,7 @@ pub struct OutlinerGroup {
     pub rotation: Option<Vec3>,
     #[serde(rename = "isOpen", default)]
     pub is_open: bool,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub children: Vec<OutlinerNode>,
 }
 

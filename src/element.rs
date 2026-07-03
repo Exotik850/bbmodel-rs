@@ -85,7 +85,7 @@ pub struct CubeFaces {
 }
 
 /// A single cube face with UV coordinates and an optional texture index.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, Default)]
 pub struct CubeFace {
     /// UV rectangle `[u_min, v_min, u_max, v_max]` in texture space.
     pub uv: UvRect,
@@ -98,7 +98,7 @@ pub struct CubeFace {
 // ---------------------------------------------------------------------------
 
 /// A freeform mesh with arbitrary vertices and faces.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, Default)]
 #[skip_serializing_none]
 pub struct Mesh {
     #[serde(default)]
@@ -123,21 +123,22 @@ pub struct Mesh {
     #[serde(default)]
     pub mirror_uv: bool,
     /// Vertex positions keyed by vertex ID.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
     pub vertices: HashMap<String, Vec3>,
     /// Mesh faces keyed by face ID.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
     pub faces: HashMap<String, MeshFace>,
 }
 
 /// A single mesh face (quad or triangle) with per-vertex UVs.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, Default)]
 #[skip_serializing_none]
 pub struct MeshFace {
     /// Per-vertex UV coordinates: vertex ID → `[u, v]`.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
     pub uv: HashMap<String, Vec2>,
     /// Ordered vertex IDs (CCW winding for outward-facing).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub vertices: Vec<String>,
     #[serde(default)]
     pub texture: Option<u32>,
