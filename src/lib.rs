@@ -12,6 +12,8 @@ pub mod prelude {
     pub use crate::metadata::*;
     pub use crate::texture::*;
     pub use crate::{BBModel, Display, DisplaySlot, Tri, UvRect, Vec2, Vec3};
+    #[cfg(feature = "bevy")]
+    pub use crate::bevy::*;
 }
 pub use prelude::*;
 pub mod animation;
@@ -19,6 +21,8 @@ pub mod collections;
 pub mod element;
 pub mod metadata;
 pub mod texture;
+#[cfg(feature = "bevy")]
+pub mod bevy;
 
 // ---------------------------------------------------------------------------
 // Type aliases
@@ -161,6 +165,7 @@ fn default_interpolation() -> Interpolation {
 
 /// Top-level `.bbmodel` file representation (format version 5.0).
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
+#[cfg_attr(feature = "bevy", derive(bevy_asset::Asset, bevy_reflect::TypePath))]
 #[skip_serializing_none]
 pub struct BBModel {
     pub meta: Metadata,

@@ -12,12 +12,36 @@ readme = "README.md"
 glam = { version = "0.33.2", optional = true, features = [
   "serde",
 ], default-features = false }
-serde = { version = "1.0.228", features = ["derive", "alloc"], default-features = false }
+serde = { version = "1.0.228", features = [
+  "derive",
+  "alloc",
+], default-features = false }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
-serde_with = { version = "3.21", default-features = false, features = ["macros"] }
+serde_with = { version = "3.21", default-features = false, features = [
+  "macros",
+] }
 uuid = { version = "1.23.4", features = ["serde"], default-features = false }
 
+# bevy dependencies
+bevy_mesh = { version = "0.19", optional = true }
+bevy_ecs = { version = "0.19", optional = true }
+bevy_app = { version = "0.19", optional = true }
+bevy_common_assets = { version = "0.17", optional = true, features = ["json"] }
+bevy_asset = { version = "0.19", optional = true }
+bevy_reflect = { version = "0.19", optional = true }
+bevy_image = { version = "0.19", optional = true }
+
+
 [features]
-glam = ["dep:glam"]
+glam = ["dep:glam", "bevy_mesh/glam"]
 default = ["std"]
 std = ["serde/std", "serde_json/std", "uuid/std", "serde_with/std", "glam/std"]
+bevy = [
+  "dep:bevy_mesh",
+  "dep:bevy_ecs",
+  "dep:bevy_app",
+  "dep:bevy_common_assets",
+  "dep:bevy_asset",
+  "dep:bevy_reflect",
+  "dep:bevy_image"
+]
