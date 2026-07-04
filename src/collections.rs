@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// Groups (v5.0 style — defined outside the outliner)
+// Groups (v5.0 style - defined outside the outliner)
 // ---------------------------------------------------------------------------
 use crate::{String, Vec, Vec3, default_true};
 use serde::{Deserialize, Serialize};
@@ -58,7 +58,7 @@ pub enum OutlinerNode {
 /// A group wrapper used exclusively inside the outliner tree.
 ///
 /// In v5.0+ the "heavy" properties (name, origin, rotation, …) live in the
-/// separate `groups` array — this struct only carries hierarchy information.
+/// separate `groups` array - this struct only carries hierarchy information.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[skip_serializing_none]
 pub struct OutlinerGroup {

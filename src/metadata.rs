@@ -1,4 +1,6 @@
 use crate::String;
+#[cfg(not(feature = "std"))]
+use crate::alloc::string::ToString;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 

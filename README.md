@@ -6,7 +6,7 @@ A Rust library for parsing and serializing [Blockbench](https://www.blockbench.n
 
 - **Deserialize & serialize** `.bbmodel` files via [serde](https://serde.rs)
 - Covers cubes, meshes, groups, outliner hierarchy, textures, animations, keyframes, display settings, and collections
-- Optional [glam](https://github.com/bitshifter/glam-rs) integration — use `glam::Vec3`/`Vec2`/`Vec4` or plain `[f32; N]` arrays
+- Optional [glam](https://github.com/bitshifter/glam-rs) integration - use `glam::Vec3`/`Vec2`/`Vec4` or plain `[f32; N]` arrays
 - `no_std` compatible (disable the `std` feature)
 
 ## Usage
