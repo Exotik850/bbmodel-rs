@@ -30,7 +30,15 @@ bevy_common_assets = { version = "0.17", optional = true, features = ["json"] }
 bevy_asset = { version = "0.19", optional = true }
 bevy_reflect = { version = "0.19", optional = true }
 bevy_image = { version = "0.19", optional = true }
+bevy_pbr = { version = "0.19", optional = true }
+bevy_color = { version = "0.19", optional = true }
+bevy_log = { version = "0.19", optional = true }
+bevy_transform = { version = "0.19", optional = true }
+base64 = { version = "0.22.1", optional = true }
 
+
+[dev-dependencies]
+bevy = { version = "0.19" }
 
 [features]
 glam = ["dep:glam", "bevy_mesh/glam"]
@@ -43,5 +51,12 @@ bevy = [
   "dep:bevy_common_assets",
   "dep:bevy_asset",
   "dep:bevy_reflect",
-  "dep:bevy_image"
+  "dep:bevy_image",
+  "dep:bevy_pbr",
+  "dep:bevy_color",
+  "dep:bevy_log",
+  "dep:bevy_transform",
+  "dep:base64",
+  "glam",
+  "std"
 ]

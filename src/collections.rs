@@ -63,7 +63,7 @@ pub enum OutlinerNode {
 #[skip_serializing_none]
 pub struct OutlinerGroup {
     pub uuid: Uuid,
-    pub name: String,
+    pub name: Option<String>,
     #[serde(default)]
     pub origin: Option<Vec3>,
     #[serde(default)]

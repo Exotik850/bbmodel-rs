@@ -2,7 +2,10 @@
 // Elements (geometry primitives)
 // ---------------------------------------------------------------------------
 
-use crate::{HashMap, String, Tri, UvRect, Vec, Vec2, Vec3, default_true, sqrt, v2, v3, v3_x, v3_y, v3_z, v4_x, v4_y, v4_z, v4_w};
+use crate::{
+    HashMap, String, Tri, UvRect, Vec, Vec2, Vec3, default_true, sqrt, v2, v3, v3_x, v3_y, v3_z,
+    v4_w, v4_x, v4_y, v4_z,
+};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use uuid::Uuid;
@@ -197,6 +200,13 @@ impl<'a> Iterator for TriIter<'a> {
 struct FaceDesc {
     quad: [usize; 4],
     normal: [f32; 3],
+    /// Maps each quad vertex to a UV corner index:
+    /// 0 = top-left     (u_min, v_min)
+    /// 1 = top-right    (u_max, v_min)
+    /// 2 = bottom-right (u_max, v_max)
+    /// 3 = bottom-left  (u_min, v_max)
+    /// (in Blockbench's V-down UV space, before normalization)
+    uv_order: [usize; 4],
 }
 
 const CUBE_CORNERS: [[f32; 3]; 8] = [
@@ -211,19 +221,60 @@ const CUBE_CORNERS: [[f32; 3]; 8] = [
 ];
 
 const CUBE_FACES: [FaceDesc; 6] = [
-    // north (-Z)
-    FaceDesc { quad: [3, 2, 1, 0], normal: [0.0, 0.0, -1.0] },
-    // east (+X)
-    FaceDesc { quad: [2, 6, 5, 1], normal: [1.0, 0.0, 0.0] },
-    // south (+Z)
-    FaceDesc { quad: [7, 6, 2, 3], normal: [0.0, 0.0, 1.0] },
-    // west (-X)
-    FaceDesc { quad: [0, 4, 7, 3], normal: [-1.0, 0.0, 0.0] },
-    // up (+Y)
-    FaceDesc { quad: [3, 7, 6, 2], normal: [0.0, 1.0, 0.0] },
-    // down (-Y)
-    FaceDesc { quad: [0, 1, 5, 4], normal: [0.0, -1.0, 0.0] },
+    // north (-Z) — z = from.z, CCW from outside
+    FaceDesc {
+        quad: [3, 2, 1, 0],
+        normal: [0.0, 0.0, -1.0],
+        uv_order: [0, 1, 2, 3],
+    },
+    // east (+X) — x = to.x
+    FaceDesc {
+        quad: [2, 6, 5, 1],
+        normal: [1.0, 0.0, 0.0],
+        uv_order: [0, 1, 2, 3],
+    },
+    // south (+Z) — z = to.z, FIXED: was [7,6,2,3] (wrong corners), now [4,5,6,7]
+    FaceDesc {
+        quad: [4, 5, 6, 7],
+        normal: [0.0, 0.0, 1.0],
+        uv_order: [0, 1, 2, 3],
+    },
+    // west (-X) — x = from.x
+    FaceDesc {
+        quad: [0, 4, 7, 3],
+        normal: [-1.0, 0.0, 0.0],
+        uv_order: [0, 1, 2, 3],
+    },
+    // up (+Y) — y = to.y, UV order is non-standard (Blockbench maps U=-X, V=-Z)
+    FaceDesc {
+        quad: [3, 7, 6, 2],
+        normal: [0.0, 1.0, 0.0],
+        uv_order: [0, 3, 2, 1],
+    },
+    // down (-Y) — y = from.y
+    FaceDesc {
+        quad: [0, 1, 5, 4],
+        normal: [0.0, -1.0, 0.0],
+        uv_order: [0, 1, 2, 3],
+    },
 ];
+
+/// Apply Euler rotation (X→Y→Z, in degrees) around a pivot point.
+///
+/// Returns `pivot + Rz · Ry · Rx · (point - pivot)`.
+fn rotate_around(point: &Vec3, pivot: &Vec3, rotation_deg: &Vec3) -> Vec3 {
+    // use quat instead
+    let pivot_to_point = *point - *pivot;
+    let rotation_rad = *rotation_deg * std::f32::consts::PI / 180.0;
+    let rotation_quat = glam::Quat::from_euler(
+        glam::EulerRot::XYZ,
+        rotation_rad.x,
+        rotation_rad.y,
+        rotation_rad.z,
+    );
+    let rotated_point = rotation_quat * pivot_to_point;
+    rotated_point + *pivot
+}
 
 impl Cube {
     /// Lazy iterator over the triangles of this cube.
@@ -264,6 +315,15 @@ impl Cube {
         let u_max = v4_z(&face.uv);
         let v_max = v4_w(&face.uv);
 
+        // The four UV corners in Blockbench's V-down pixel space.
+        let uv_corners: [Vec2; 4] = [
+            v2(u_min, v_min), // 0: top-left
+            v2(u_max, v_min), // 1: top-right
+            v2(u_max, v_max), // 2: bottom-right
+            v2(u_min, v_max), // 3: bottom-left
+        ];
+
+        // Build the four corner positions in cube-local space (before rotation).
         let corners: [Vec3; 4] = desc.quad.map(|ci| {
             let c = CUBE_CORNERS[ci];
             v3(
@@ -273,26 +333,39 @@ impl Cube {
             )
         });
 
-        let uv_corners: [Vec2; 4] = [
-            v2(u_min, v_min),
-            v2(u_max, v_min),
-            v2(u_max, v_max),
-            v2(u_min, v_max),
-        ];
+        // Apply the cube's rotation around its origin (pivot) if non-zero.
+        let has_rotation = v3_x(&self.rotation) != 0.0
+            || v3_y(&self.rotation) != 0.0
+            || v3_z(&self.rotation) != 0.0;
+
+        let corners: [Vec3; 4] = if has_rotation {
+            corners.map(|c| rotate_around(&c, &self.origin, &self.rotation))
+        } else {
+            corners
+        };
+
+        // Reorder UVs to match the corner winding using the per-face uv_order.
+        let uvs: [Vec2; 4] = desc.uv_order.map(|i| uv_corners[i]);
 
         let normal = v3(desc.normal[0], desc.normal[1], desc.normal[2]);
+        // Rotate the normal by the cube's rotation too, so lighting stays correct.
+        let normal = if has_rotation {
+            rotate_around(&normal, &v3(0.0, 0.0, 0.0), &self.rotation)
+        } else {
+            normal
+        };
 
         if tri_idx == 0 {
             Some(Tri {
                 positions: [corners[0], corners[1], corners[2]],
-                uvs: [uv_corners[0], uv_corners[1], uv_corners[2]],
+                uvs: [uvs[0], uvs[1], uvs[2]],
                 normals: [normal, normal, normal],
                 texture,
             })
         } else {
             Some(Tri {
                 positions: [corners[0], corners[2], corners[3]],
-                uvs: [uv_corners[0], uv_corners[2], uv_corners[3]],
+                uvs: [uvs[0], uvs[2], uvs[3]],
                 normals: [normal, normal, normal],
                 texture,
             })
@@ -378,6 +451,18 @@ impl<'a> Iterator for MeshTriIter<'a> {
                     self.tri_rem = 0;
                     continue;
                 }
+
+                // Apply the mesh's rotation around its origin (pivot) if non-zero.
+                let has_rotation = v3_x(&self.mesh.rotation) != 0.0
+                    || v3_y(&self.mesh.rotation) != 0.0
+                    || v3_z(&self.mesh.rotation) != 0.0;
+                let pos: Vec<Vec3> = if has_rotation {
+                    pos.iter()
+                        .map(|p| rotate_around(p, &self.mesh.origin, &self.mesh.rotation))
+                        .collect()
+                } else {
+                    pos
+                };
 
                 let uvs: Vec<Vec2> = face
                     .vertices
